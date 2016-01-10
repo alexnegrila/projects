@@ -14,6 +14,7 @@ import java.io.File;
 import java.util.List;
 
 import static videoDownloader.Utils.*;
+import static videoDownloader.Utils.downloadVideo;
 
 /**
  * Created by alexandriann on 04/01/16.
@@ -29,29 +30,46 @@ public class DoYouYogaStrategy implements Strategy {
     }
 
     public void crawl() {
+        crawlCourse();
+    }
+
+    private void crawlCourse() {
         final DoYouYogaCoursePage page = startPage;
         final String courseTitle = page.getCourseTitle().getText();
         final String courseAuthor = page.getCourseAuthor().getText();
         File courseFolder = getFolder(courseTitle + " " + courseAuthor);
         final List<Module> modules = page.getModules();
+//        List<Video> videos = page.getVideos(driver);
+//        for (int i = 0; i < videos.size(); i++) {
+//            Video video = videos.get(i);
+//            int courseVideoIndex = i + 1;
+//            downloadVideo(video.getDownloadURL(), new File(courseFolder + Constants.SLASH + courseVideoIndex +Constants.DOT + courseTitle+ ".mp4"));
+//        }
+        crawlModules(courseFolder, modules);
+    }
+
+    private void crawlModules(File courseFolder, List<Module> modules) {
         for (int i = 0; i < modules.size(); i++) {
             Module module = modules.get(i);
             final int moduleIndex = i + 1;
             final File moduleFolder = getFolder(courseFolder.getName() + Constants.SLASH + moduleIndex + Constants.DOT + module.getTitle());
             final List<Lesson> lessons = module.getLessons();
-            for (int j = 0; j < lessons.size(); j++) {
-                final Lesson lesson = lessons.get(j);
+            crawlLessons(moduleFolder, lessons);
+        }
+    }
 
-                String lessonTitle = lesson.getTitle();
-                final String lessonURL = lesson.getURL();
-                final DoYouYogaLessonPage doYouYogaLessonPage = loadLessonPage(lessonURL);
+    private void crawlLessons(File moduleFolder, List<Lesson> lessons) {
+        for (int j = 0; j < lessons.size(); j++) {
+            final Lesson lesson = lessons.get(j);
 
-                Video video = doYouYogaLessonPage.getVideo(driver);
-                final String videoUrl = video.getDownloadURL();
-                final int lessonIndex = j + 1;
-                downloadVideo(videoUrl, new File(moduleFolder + Constants.SLASH + lessonIndex + Constants.DOT + lessonTitle + ".mp4"));
-                simulateViewing(lessonTitle);
-            }
+            String lessonTitle = lesson.getTitle();
+            final String lessonURL = lesson.getURL();
+            final DoYouYogaLessonPage doYouYogaLessonPage = loadLessonPage(lessonURL);
+
+            Video video = doYouYogaLessonPage.getVideo(driver);
+            final int lessonIndex = j + 1;
+            downloadVideo(video.getDownloadURL(), new File(moduleFolder + Constants.SLASH + lessonIndex + Constants.DOT + lessonTitle + ".mp4"));
+//            simulateViewing(lessonTitle);
         }
     }
 
